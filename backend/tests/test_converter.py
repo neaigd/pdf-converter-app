@@ -44,21 +44,25 @@ class TestConverter(unittest.TestCase):
             os.remove(cls.TEST_PDF_PATH)
         if os.path.exists(os.path.join(cls.BASE_DIR, cls.TEST_OUTPUT_DIR)):
             shutil.rmtree(os.path.join(cls.BASE_DIR, cls.TEST_OUTPUT_DIR))
-        # Optionally clean the main output dir if it was only for tests
-        # For now, let's assume the main output dir might be used by other processes or manual checks
-        # if os.path.exists(cls.PROJECT_ROOT_OUTPUT_DIR):
-        #     shutil.rmtree(cls.PROJECT_ROOT_OUTPUT_DIR)
+        # Clean up files generated in the main output directory by this test class
+        for fmt in ["md", "txt", "docx", "odt", "xyz"]: # xyz for the unsupported format test if it ever creates a file
+            expected_output_file = os.path.join(cls.PROJECT_ROOT_OUTPUT_DIR, f"{os.path.splitext(cls.TEST_PDF_FILENAME)[0]}.{fmt}")
+            if os.path.exists(expected_output_file):
+                os.remove(expected_output_file)
 
 
     def test_convert_to_md(self):
         output_file = convert_pdf(self.TEST_PDF_PATH, "md", self.PROJECT_ROOT_OUTPUT_DIR)
         self.assertTrue(os.path.exists(output_file))
         self.assertTrue(output_file.endswith(".md"))
-        # Add more assertions here: check content, link preservation (if feasible in test)
         with open(output_file, "r", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("Hello, this is a test PDF", content)
-        self.assertIn("[Link to Example](https://www.example.com)", content) # PyMuPDF md format
+        # Pandoc's HTML to MD conversion of PyMuPDF's XHTML output
+        # The exact link format might vary based on Pandoc version and input HTML.
+        # A robust check would be for the presence of "Link to Example" and "example.com".
+        self.assertIn("Link to Example", content, "Link text not found in Markdown")
+        self.assertIn("example.com", content, "Link URL not found in Markdown")
 
     def test_convert_to_txt(self):
         output_file = convert_pdf(self.TEST_PDF_PATH, "txt", self.PROJECT_ROOT_OUTPUT_DIR)

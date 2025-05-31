@@ -28,13 +28,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install system dependencies (like Pandoc)
+    - name: Install system dependencies (Pandoc)
       run: |
         sudo apt-get update
-        sudo apt-get install -y pandoc libreoffice # For unoconv (if used, and if it implies full LO install)
-        # Note: unoconv might require more setup or a running LibreOffice instance,
-        # which can be tricky in CI. Pandoc is more straightforward.
-        # If unoconv is strictly needed and causes issues, consider Docker for a more controlled env.
+        sudo apt-get install -y pandoc
+        # Note: unoconv (requiring LibreOffice) was removed as it's not directly used by the core conversion logic.
+        # Pandoc is the primary system dependency for docx/odt.
 
     - name: Install Python dependencies
       working-directory: ./backend
@@ -46,7 +45,7 @@ jobs:
     - name: Run tests
       working-directory: ./backend
       run: |
-        # Ensure the backend directory itself is in PYTHONPATH for imports like 'from backend.converter import ...'
+        # Ensure the project root is in PYTHONPATH for imports like 'from backend.converter import ...'
         # This is often needed if tests are structured in a subdirectory and import from parent package.
         export PYTHONPATH=${{ github.workspace }}:$PYTHONPATH
         python -m unittest discover -s ./tests -p "test_*.py"
