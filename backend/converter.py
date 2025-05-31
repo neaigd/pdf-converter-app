@@ -1,6 +1,7 @@
 import os
 import fitz # PyMuPDF
 import subprocess
+import tempfile
 
 def convert_pdf(pdf_path, output_format, output_dir):
     filename = os.path.basename(pdf_path)
@@ -10,70 +11,108 @@ def convert_pdf(pdf_path, output_format, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    # Basic text extraction with PyMuPDF to try and preserve links conceptually
-    # More advanced link preservation would require deeper analysis of PDF structures
-    # and specific handling for each output format.
-
     doc = fitz.open(pdf_path)
-    text_with_links = ""
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        text_with_links += page.get_text("text", flags=fitz.TEXTFLAGS_TEXT) # Basic text
-        # For actual link preservation, you'd iterate through page.get_links()
-        # and embed them appropriately in the target format.
-        # This is highly complex and format-dependent.
 
-    # Using Pandoc for conversion
-    # Ensure Pandoc is installed on the system where the backend runs.
     try:
         if output_format == "txt":
+            all_text = ""
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                all_text += page.get_text("text") + "\n"
             with open(output_file_path, "w", encoding="utf-8") as f:
-                f.write(text_with_links)
+                f.write(all_text)
+
         elif output_format == "md":
-            # PyMuPDF's get_text("markdown") can be an option, or use Pandoc
-            md_text = doc.get_text("markdown", flags=fitz.TEXTFLAGS_LINK_SLOPE) # More sophisticated markdown
-            with open(output_file_path, "w", encoding="utf-8") as f:
-                f.write(md_text)
-            # Alternative with Pandoc:
-            # subprocess.run(["pandoc", pdf_path, "-s", "-t", "markdown", "-o", output_file_path], check=True)
+            full_xhtml_content = ""
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                full_xhtml_content += page.get_text("xhtml")
+
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html", encoding="utf-8") as tmp_html_file:
+                tmp_html_file.write(full_xhtml_content)
+                temp_html_filepath = tmp_html_file.name
+
+            try:
+                subprocess.run(
+                    ["pandoc", temp_html_filepath, "-f", "html", "-t", "markdown", "-s", "-o", output_file_path],
+                    check=True
+                )
+            finally:
+                os.remove(temp_html_filepath)
+
         elif output_format in ["docx", "odt"]:
-             # Pandoc is generally good for these
-            subprocess.run(["pandoc", pdf_path, "-s", "-o", output_file_path], check=True)
+            full_xhtml_content_for_office = ""
+            for page_num in range(len(doc)):
+                page = doc.load_page(page_num)
+                full_xhtml_content_for_office += page.get_text("xhtml") # Use xhtml for better structure
+
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html", encoding="utf-8") as tmp_html_file:
+                tmp_html_file.write(full_xhtml_content_for_office)
+                temp_html_filepath = tmp_html_file.name
+
+            try:
+                # Pandoc infers input format from file extension if not specified,
+                # but being explicit with "-f html" is safer.
+                subprocess.run(
+                    ["pandoc", temp_html_filepath, "-f", "html", "-t", output_format, "-s", "-o", output_file_path],
+                    check=True
+                )
+            finally:
+                os.remove(temp_html_filepath) # Clean up temporary file
         else:
             raise ValueError(f"Unsupported output format: {output_format}")
 
+        doc.close()
         return output_file_path
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Pandoc conversion failed: {e}")
-    except Exception as e:
-        raise RuntimeError(f"Error during conversion: {str(e)}")
 
+    except subprocess.CalledProcessError as e:
+        doc.close()
+        raise RuntimeError(f"Pandoc conversion failed: {e}")
+    except ValueError as e: # Specific catch for ValueError
+        doc.close()
+        raise e # Re-raise as ValueError
+    except Exception as e:
+        doc.close()
+        original_exception_type = type(e).__name__
+        raise RuntimeError(f"Error during conversion ({original_exception_type}): {str(e)}")
+
+# Keep the __main__ block for local testing, unchanged from previous step
 if __name__ == '__main__':
-    # Example usage (for testing locally)
-    # Create a dummy PDF for testing if you don't have one
     if not os.path.exists("test.pdf"):
         dummy_doc = fitz.open()
         page = dummy_doc.new_page()
         page.insert_text((50, 72), "Hello, this is a test PDF with a link.")
-        # Adding a link (conceptual, actual link creation is more involved)
-        link = {"kind": fitz.LINK_URI, "from": fitz.Rect(50, 80, 150, 100), "uri": "https://www.example.com"}
-        page.insert_link(link)
+        link_rect = fitz.Rect(50, 80, 200, 100)
+        page.insert_link({"kind": fitz.LINK_URI, "from": link_rect, "uri": "https://www.example.com"})
+        page.draw_rect(link_rect, color=(0,0,1), fill=(0.7,0.7,0.9), overlay=False)
+        page.insert_text((55,95), "Link to Example", color=(0,0,1))
         dummy_doc.save("test.pdf")
         dummy_doc.close()
 
     print(f"Current directory: {os.getcwd()}")
-    # Adjust path for output to be in the main 'output' folder from project root perspective
     project_root_output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output'))
     os.makedirs(project_root_output_dir, exist_ok=True)
 
     test_pdf_path = "test.pdf"
     if not os.path.exists(test_pdf_path):
-         print(f"Error: Test PDF '{test_pdf_path}' not found in {os.getcwd()}. Please create it.")
+         print(f"Error: Test PDF '{test_pdf_path}' not found in {os.getcwd()}. Please create it or fix path.")
     else:
-        for fmt in ["md", "txt", "docx", "odt"]:
+        formats_to_test = ["md", "txt", "docx", "odt"] # Test all formats now
+        for fmt in formats_to_test:
             try:
                 print(f"Converting to {fmt}...")
                 output = convert_pdf(test_pdf_path, fmt, project_root_output_dir)
                 print(f"Converted to {output}")
+                # Add specific checks if needed, e.g., for link content in MD
+                if fmt == "md":
+                    with open(output, "r", encoding="utf-8") as f_md:
+                        md_content = f_md.read()
+                        # Pandoc's HTML to MD conversion might format links differently.
+                        # Example: <a href="https://www.example.com">Link to Example</a> in XHTML
+                        # might become [Link to Example](https://www.example.com) in Markdown.
+                        if "example.com" in md_content and "Link to Example" in md_content:
+                            print("Markdown link text/URL basic check: PASSED")
+                        else:
+                            print(f"Markdown link text/URL basic check: FAILED. Content:\n{md_content}")
             except Exception as e:
                 print(f"Failed to convert to {fmt}: {e}")
