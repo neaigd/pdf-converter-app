@@ -8,9 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let selectedFile = null;
 
-    // Backend API URL (adjust if your backend runs elsewhere)
-    // Assuming backend is running on port 8000 locally for development
+    // --- Configuration ---
+    // IMPORTANT: Set this URL to where your backend API is running.
+    // For local development, this is typically http://localhost:8000.
+    // If you deploy the backend to a different server, update this URL.
     const API_BASE_URL = 'http://localhost:8000';
+    // --- End Configuration ---
 
     pdfFileElement.addEventListener('change', (event) => {
         selectedFile = event.target.files[0];
