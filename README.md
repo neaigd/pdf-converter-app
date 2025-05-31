@@ -25,7 +25,16 @@ The project is automatically built and deployed using GitHub Actions, with the f
 
 ## 🚀 Live Demo (GitHub Pages)
 
-You should be able to access the live application at: `https://<your-github-username>.github.io/pdf-converter-app/` (Replace `<your-github-username>` with your actual GitHub username after the first deployment).
+To enable the live demo:
+
+1.  After the first successful run of the "Deploy Frontend to gh-pages" workflow (see Actions tab), a `gh-pages` branch will be created in your repository.
+2.  Go to your GitHub repository's **Settings** page.
+3.  In the left sidebar, click on **Pages**.
+4.  Under "Build and deployment", for the **Source**, select **Deploy from a branch**.
+5.  Under "Branch", select `gh-pages` as the branch and `/ (root)` as the folder.
+6.  Click **Save**.
+
+Your application will then be available at: `https://<your-github-username>.github.io/pdf-converter-app/` (Replace `<your-github-username>` with your actual GitHub username). It might take a few minutes for the site to become active after saving.
 
 ## 🛠️ Technologies Used
 
@@ -103,13 +112,16 @@ To run the backend unit tests:
 ## 🔄 GitHub Actions & Deployments
 
 *   **Backend CI**: Pushes or pull requests to the `main` branch affecting the `backend/` directory or `.github/workflows/backend.yml` will trigger the backend CI workflow. This workflow installs dependencies (including `pandoc`) and runs unit tests.
-*   **Frontend Deployment**: Pushes to the `main` branch affecting the `frontend/` directory or `.github/workflows/frontend.yml` will trigger the frontend deployment workflow. This workflow deploys the contents of the `frontend/` directory to GitHub Pages.
+*   **Frontend Deployment**: Pushes to the `main` branch affecting the `frontend/` directory or `.github/workflows/frontend.yml` will trigger the "Deploy Frontend to gh-pages" workflow. This workflow:
+    1.  Checks out the `main` branch.
+    2.  Pushes the entire content of the `frontend/` directory to the `gh-pages` branch.
+    *   **Important**: You need to configure GitHub Pages in your repository settings to serve from the `gh-pages` branch (see "Live Demo" section above for instructions).
 
 You can view the status of these actions under the "Actions" tab of your GitHub repository.
 
 To manually trigger a frontend deployment (if `workflow_dispatch` is enabled in `frontend.yml`):
 1.  Go to the "Actions" tab in your GitHub repository.
-2.  Select the "Deploy Frontend to GitHub Pages" workflow from the list.
+2.  Select the "Deploy Frontend to gh-pages" workflow from the list.
 3.  Click on "Run workflow", choose the branch (usually `main`), and click "Run workflow".
 
 ## 📄 How to Test Conversions
