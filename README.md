@@ -82,6 +82,9 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 The backend API will be available at `http://localhost:8000`. You can see the API docs at `http://localhost:8000/docs`.
 
+**Important Note on CORS:**
+The backend is configured with CORS (Cross-Origin Resource Sharing) to allow requests from typical frontend development servers (like `http://localhost:8080`, `http://127.0.0.1:8080`) and from all origins (`*`). This `"*"` setting is for ease of development and testing with services like GitHub Pages. For a production deployment of the backend, you should restrict the `origins` list in `backend/main.py` to only the specific domains where your frontend is hosted.
+
 ### 3. Frontend Setup
 
 1.  Navigate to the `frontend` directory:
@@ -108,6 +111,28 @@ To run the backend unit tests:
 
     python -m unittest discover -s ./tests -p "test_*.py"
     ```
+
+## 🔗 Connecting Frontend (GitHub Pages) to Backend
+
+The frontend application, whether run locally (`index.html`) or deployed via GitHub Pages, needs to connect to a running backend API.
+
+*   **Backend Location**: The Python backend (FastAPI server) must be running. This can be:
+    *   Locally on your machine (e.g., `python backend/main.py` or `uvicorn backend.main:app --reload --port 8000`).
+    *   Deployed to a hosting service (e.g., Heroku, AWS, Google Cloud).
+
+*   **Configuring the API URL in Frontend**:
+    The frontend needs to know the backend's URL. This is set in `frontend/script.js`:
+    ```javascript
+    const API_BASE_URL = 'http://localhost:8000';
+    ```
+    *   **For local development**: If your backend is running on `http://localhost:8000`, this default URL is correct.
+    *   **For GitHub Pages with a local backend**: If you are using the GitHub Pages frontend, you still need to run the backend locally. The GitHub Pages site will try to make requests to `http://localhost:8000` on *your computer*. Ensure your browser can access this (some browsers/extensions might block localhost access from `https://` sites, but generally this works for development).
+    *   **For GitHub Pages with a deployed backend**: If you have deployed your backend to a public URL (e.g., `https://your-backend-api.com`), you **must** update `API_BASE_URL` in `frontend/script.js` to this public URL, then commit and push this change so your GitHub Pages site uses the correct API endpoint.
+
+**If you see "NetworkError" or conversion button doesn't work on GitHub Pages:**
+1.  **Ensure your local Python backend is running.**
+2.  **Check the browser's developer console (usually F12) for error messages.** CORS errors or mixed content warnings might appear if the backend is not configured correctly or if the `API_BASE_URL` is wrong.
+3.  The backend's CORS policy is currently set to allow all origins (`*`) for easier testing. If you changed this, ensure your GitHub Pages URL (`https://<username>.github.io`) is in the allowed list.
 
 ## 🔄 GitHub Actions & Deployments
 
