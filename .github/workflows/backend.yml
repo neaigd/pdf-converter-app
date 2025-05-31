@@ -1,0 +1,62 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ] # Or your primary branch
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ main ] # Or your primary branch
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"] # Test against multiple Python versions
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (like Pandoc)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc libreoffice # For unoconv (if used, and if it implies full LO install)
+        # Note: unoconv might require more setup or a running LibreOffice instance,
+        # which can be tricky in CI. Pandoc is more straightforward.
+        # If unoconv is strictly needed and causes issues, consider Docker for a more controlled env.
+
+    - name: Install Python dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install unittest-xml-reporting # If you want JUnit XML reports
+
+    - name: Run tests
+      working-directory: ./backend
+      run: |
+        # Ensure the backend directory itself is in PYTHONPATH for imports like 'from backend.converter import ...'
+        # This is often needed if tests are structured in a subdirectory and import from parent package.
+        export PYTHONPATH=${{ github.workspace }}:$PYTHONPATH
+        python -m unittest discover -s ./tests -p "test_*.py"
+        # If using XML reports:
+        # python -m xmlrunner discover -s ./tests -p "test_*.py" -o test-reports
+
+    # Optional: Upload test reports (if using XML runner)
+    # - name: Upload test reports
+    #   if: always() # Run this step even if tests fail
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: test-reports-${{ matrix.python-version }}
+    #     path: backend/test-reports/*.xml

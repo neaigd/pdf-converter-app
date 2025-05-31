@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Converter Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📄 PDF Converter Pro</h1>
+            <p>Convert your PDF files with ease, preserving links and structure.</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>1. Upload Your PDF</h2>
+                <input type="file" id="pdfFile" accept=".pdf">
+                <label for="pdfFile" class="file-label">
+                    <span id="fileName">Click to choose a PDF file</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="upload-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                </label>
+            </section>
+
+            <section class="options-section">
+                <h2>2. Select Output Format</h2>
+                <div class="format-options">
+                    <label><input type="radio" name="outputFormat" value="md" checked> Markdown (.md)</label>
+                    <label><input type="radio" name="outputFormat" value="docx"> Word (.docx)</label>
+                    <label><input type="radio" name="outputFormat" value="odt"> LibreOffice (.odt)</label>
+                    <label><input type="radio" name="outputFormat" value="txt"> Plain Text (.txt)</label>
+                </div>
+            </section>
+
+            <button id="convertBtn">✨ Convert File</button>
+
+            <section class="progress-section">
+                <h2>Conversion Progress</h2>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%;">0%</div>
+                </div>
+            </section>
+
+            <section class="status-section">
+                <h2>Status</h2>
+                <p id="statusMessage">Awaiting file selection...</p>
+            </section>
+
+            <section class="download-section">
+                <h2>3. Download Converted File</h2>
+                <a id="downloadLink" href="#" class="button disabled" download>Download File</a>
+            </section>
+        </main>
+
+        <footer>
+            <p>PDF Converter Pro - Modern & Functional</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+.installed.cfg
+*.egg
+instance/
+.webassets-cache/
+.hypothesis/
+
+# FastAPI / Uvicorn
+.uvicorn.env
+
+# Output directory for converted files
+output/
+# Test output directory (if created locally by tests)
+backend/tests/test_output/
+backend/test.pdf
+
+# Node.js (if frontend dependencies were managed by npm/yarn)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json # Often committed, but can be ignored depending on policy
+# yarn.lock # Often committed
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.DS_Store
