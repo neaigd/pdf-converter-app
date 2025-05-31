@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+PyMuPDF
+python-docx
+# pandoc is a system dependency, not a pip package in the same way for direct install
+# unoconv is also a system dependency, often used with LibreOffice
+# pdfminer.six can be an alternative or supplement to PyMuPDF
+pdfminer.six
